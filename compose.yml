@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  script-gen:
+    container_name: script_generator
+    build:
+      context: .    #point from current directory. COPY/ADD in dockerfile will use this path
+      dockerfile: BuildScript/dockerfile
+    volumes:
+      - script:/app/out
+    
+  web:
+    container_name: webapi
+    build:
+      context: ./SampleWebapi
+      dockerfile: dockerfile
+    ports:
+      - 8080:8080
+    environment:
+      CUSTOMCONNSTR_DBConnectionString: ${CUSTOMCONNSTR_DBConnectionString}
+    depends_on:
+      - db
+
+  db:
+    image: postgres:14
+    container_name: pg_db
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sample_db
+    volumes:
+      - script:/docker-entrypoint-initdb.d/
+    ports:
+      - 5432:5432
+    depends_on:
+      - script-gen
+volumes:
+  script:
